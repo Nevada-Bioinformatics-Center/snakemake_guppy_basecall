@@ -1,3 +1,3 @@
 ## path to h5 files
-directory: "/mypool/projects/steve_frese/guppy_testing/test_files"
-basealgo: "dna_r9.4.1_450bps_hac.cfg"
+directory: "/home/nmhd/projects/matt/16S_4_dec"
+basealgo: "dna_r10.3_450bps_hac.cfg"

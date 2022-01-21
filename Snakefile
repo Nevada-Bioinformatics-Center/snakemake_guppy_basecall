@@ -3,40 +3,67 @@ import glob
 configfile: "config.yaml"
 
 inputdirectory=config["directory"]
-SAMPLES, = glob_wildcards(inputdirectory+"/{sample}.fast5", followlinks=True)
+outdirectory=config["directory"]
+BARCODES, SAMPLES, = glob_wildcards(inputdirectory+"/fast5_pass/{barcode}/{sample}.fast5", followlinks=True)
+print("Pass Sample List")
 print(SAMPLES)
+print(BARCODES)
 
-wildcard_constraints:
-    sample="\w+\d+_\w+_\w+\d+_.+_\d"
+SAMPLES_skip, = glob_wildcards(inputdirectory+"/fast5_skip/{sample_skip}.fast5", followlinks=True)
+print("Skip Sample List")
+print(SAMPLES_skip)
+
+#wildcard_constraints:
+#    barcode="barcode\d+"
+#    sample="\w+\d+_\w+_\w+\d+_.+_\d"
 
 
 ##### target rules #####
 rule all:
     input: 
-       expand('basecall/{sample}/sequencing_summary.txt', sample=SAMPLES),
-#       "qc/multiqc.html"
+       expand(inputdirectory+'/basecall/pass/{sample}_{barcode}/', zip, barcode=BARCODES, sample=SAMPLES),
+       expand(inputdirectory+'/basecall/skip/{sample_skip}/', sample_skip=SAMPLES_skip),
 
 
-rule make_indvidual_samplefiles:
+rule make_indvidual_samplefiles_pass:
     input:
-        inputdirectory+"/{sample}.fast5",
+        inputdirectory+"/fast5_pass/{barcode}/{sample}.fast5",
     output:
-        "lists/{sample}.txt",
+        "lists/{sample}_{barcode}.txt",
+    shell:
+        "basename {input}  > {output}"
+
+rule make_indvidual_samplefiles_skip:
+    input:
+        inputdirectory+"/fast5_skip/{sample_skip}.fast5",
+    output:
+        "lists/{sample_skip}.txt",
     shell:
         "basename {input}  > {output}"
 
 
-rule guppy_basecall_persample:
+rule guppy_basecall_persample_pass:
     input:
-        directory=directory(inputdirectory),
-        samplelist="lists/{sample}.txt",
+        directory=inputdirectory+"/fast5_pass/{barcode}/",
+        samplelist="lists/{sample}_{barcode}.txt",
     output:
-        summary="basecall/{sample}/sequencing_summary.txt",
-        directory=directory("basecall/{sample}/"),
+        directory=directory(outdirectory+"/basecall/pass/{sample}_{barcode}/"),
     params: 
-        config["basealgo"]
+        basealgo=config["basealgo"],
     shell:
-        "guppy_basecaller -i {input.directory} --input_file_list {input.samplelist} -s {output.directory} -c {params} --compress_fastq -x \"auto\" --gpu_runners_per_device 3 --num_callers 2 --chunks_per_runner 200"
+        "guppy_basecaller -i {input.directory} --input_file_list {input.samplelist} -s {output.directory} -c {params.basealgo} -x \"auto\" --gpu_runners_per_device 3 --num_callers 2 --chunks_per_runner 200"
+
+rule guppy_basecall_persample_skip:
+    input:
+        directory=inputdirectory+"/fast5_skip/",
+        samplelist="lists/{sample_skip}.txt",
+    output:
+        directory=directory(outdirectory+"/basecall/skip/{sample_skip}/"),
+    params: 
+        basealgo=config["basealgo"],
+    shell:
+        "guppy_basecaller -i {input.directory} --input_file_list {input.samplelist} -s {output.directory} -c {params.basealgo} -x \"auto\" --gpu_runners_per_device 3 --num_callers 2 --chunks_per_runner 200"
+        #"guppy_basecaller -i {input.directory} --input_file_list {input.samplelist} -s {output.directory} -c {params.basealgo} --compress_fastq -x \"auto\" --gpu_runners_per_device 3 --num_callers 2 --chunks_per_runner 200"
 
 
 #rule guppy_linkfastq:

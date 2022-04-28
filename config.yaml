@@ -1,3 +1,6 @@
 ## path to h5 files
-directory: "/home/nmhd/projects/matt/16S_4_dec"
-basealgo: "dna_r10.3_450bps_hac.cfg"
+#directory: "/home/nmhd/projects/matt/16S_4_dec"
+directory: "/mypool/projects/steve_frese/16s_project"
+#basealgo: "dna_r10.3_450bps_hac.cfg"
+kit: "SQK-16S024"
+flowcell: "FLO-FLG001"

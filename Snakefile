@@ -28,7 +28,8 @@ rule all:
 #       expand(inputdirectory+'/basecall/pass/{sample}_{barcode}/', zip, barcode=BARCODES, sample=SAMPLES),
 #       expand(inputdirectory+'/basecall/skip/{sample_skip}/', sample_skip=SAMPLES_skip),
        expand(inputdirectory+'/basecall/output/{sample_gen}/', sample_gen=SAMPLES_gen),
-       directory=directory(outdirectory+"/basecall/demultiplex/"),
+       directory(outdirectory+"/basecall/demultiplex/"),
+       directory(outdirectory+"/basecall/demultiplex-inferior/"),
 
 
 #rule make_indvidual_samplefiles_pass:
@@ -104,3 +105,14 @@ rule guppy_barcoder:
         kit=config["kit"],
     shell:
         "guppy_barcoder -i {input.indir} -s {output.directory} --barcode_kits {params.kit} -x \"auto\" --trim_barcodes --trim_adapters --trim_primers --recursive --fastq_out --records_per_fastq 0"
+
+rule guppy_barcoder_inferior:
+    input:
+        expand(outdirectory+"/basecall/output/{sample_gen}/", sample_gen=SAMPLES_gen),
+        indir=outdirectory+"/basecall/output/",
+    output:
+        directory=directory(outdirectory+"/basecall/demultiplex-inferior/"),
+    params: 
+        kit=config["kit"],
+    shell:
+        "guppy_barcoder -i {input.indir} -s {output.directory} --barcode_kits {params.kit} -x \"auto\" --trim_barcodes --trim_adapters --trim_primers --recursive --fastq_out --records_per_fastq 0 --allow_inferior_barcodes"
